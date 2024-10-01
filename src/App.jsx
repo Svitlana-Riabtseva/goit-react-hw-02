@@ -1,33 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState, useEffect } from 'react'
 import './App.css'
+import Feedback from './components/Feedback/Feedback'
+import Options from './components/Options/Options'
+import Description from './components/Description/Description'
+import Notification from './components/Notifications/Notification'
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  const [feedbacks, setFeedbacks] = useState(() => {
+    const savedFeedbacks = JSON.parse(window.localStorage.getItem("saved-feedbacks"));
+    if (savedFeedbacks !== null) {
+      return savedFeedbacks;
+    }
+    return ({
+        good: 0,
+        neutral: 0,
+        bad: 0
+    })
+  })
+
+  const { good, neutral, bad } = feedbacks;
+  const totalFeedback = good + neutral + bad;
+
+  useEffect(() => {
+      window.localStorage.setItem("saved-feedbacks", JSON.stringify(feedbacks))
+  }, [feedbacks])
+  
+  const updateFeedback = (feedbackType) => {
+    
+    setFeedbacks({
+      ...feedbacks,
+			[feedbackType]: feedbacks[feedbackType] + 1
+    });
+    
+  }
+  const resetFeedback = () => {
+      setFeedbacks({
+        good: 0,
+        neutral: 0,
+        bad: 0
+		});
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <Description />
+
+      <Options
+        updateFeedback={updateFeedback}
+        totalFeedback={totalFeedback}
+        resetFeedback={resetFeedback}
+      />
+
+      {totalFeedback > 0 ?
+        <Feedback
+          good={feedbacks.good}
+          bad={feedbacks.bad}
+          neutral={feedbacks.neutral}
+          totalFeedback={totalFeedback}
+          positiveFeedback={Math.round((good / totalFeedback) * 100)}
+        /> : <Notification />
+      }
+      
     </>
   )
 }
